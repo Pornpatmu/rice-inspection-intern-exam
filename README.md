@@ -1,1 +1,1 @@
-# easyrice-internship-test
+# rice-inspection-intern-exam
