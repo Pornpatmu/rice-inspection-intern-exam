@@ -1,0 +1,1 @@
+# easyrice-internship-test
