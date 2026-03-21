@@ -6,21 +6,23 @@ use rice_db;
 CREATE TABLE `Inspection` (
   `inspectionID` VARCHAR(12) PRIMARY KEY,
   `name` VARCHAR(255) NOT NULL,
-  `createDate` DATETIME,
+  `createdAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `standardID` VARCHAR(12),
   `note` TEXT,
   `samplingDate` DATETIME,
-  `samplingPoint` ENUM("Front End","Back End","Other"),
+  `samplingPoint` JSON,
   `price` DECIMAL(8,2),
   `imageLink` VARCHAR(255),
   `totalSample` INT,
-  `fileUpload` JSON
+  `fileUpload` VARCHAR(255)
 );
 
 CREATE TABLE `Standard` (
   `standardID` VARCHAR(12) PRIMARY KEY,
   `name` VARCHAR(255),
-  `createDate` DATETIME
+  `createdAt` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE `SubStandard` (
@@ -32,9 +34,21 @@ CREATE TABLE `SubStandard` (
   `minLength` FLOAT,
   `conditionMax` ENUM("LT","LE","GT","GE"),
   `conditionMin` ENUM("LT","LE","GT","GE"),
-  `shape` ENUM("wholegrain","broken")
+  `shape` JSON
 );
+INSERT INTO `Standard` (`standardID`, `name`) VALUES
+('1', 'มาตรฐานข้าวชั้น 1'),
+('2', 'มาตรฐานข้าวชั้น 2');
+
+INSERT INTO `SubStandard` (`standardID`, `key`, `name`, `maxLength`, `minLength`, `conditionMax`, `conditionMin`, `shape`) VALUES
+('1', 'wholegrain',   'ข้าวเต็มเมล็ด',  99,  7,   'LT', 'GT', '["wholegrain", "broken"]'),
+('1', 'broken_rice1', 'ข้าวหักใหญ่',     7,   3.5, 'LT', 'GT', '["wholegrain", "broken"]'),
+('1', 'broken_rice2', 'ข้าวหักทั่วไป',   3.5, 0,   'LT', 'GT', '["wholegrain", "broken"]'),
+('2', 'wholegrain',   'ข้าวเต็มเมล็ด',  99,  6,   'LT', 'GT', '["wholegrain", "broken"]'),
+('2', 'broken_rice1', 'ข้าวหักใหญ่',     6,   4.5, 'LT', 'GT', '["wholegrain", "broken"]'),
+('2', 'broken_rice2', 'ข้าวหักทั่วไป',   4.5, 0,   'LT', 'GT', '["wholegrain", "broken"]');
 
 ALTER TABLE `Inspection` ADD FOREIGN KEY (`standardID`) REFERENCES `Standard` (`standardID`);
-
 ALTER TABLE `SubStandard` ADD FOREIGN KEY (`standardID`) REFERENCES `Standard` (`standardID`);
+
+select * from SubStandard

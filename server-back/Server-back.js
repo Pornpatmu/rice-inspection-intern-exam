@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const app = express();
-
 const PORT = process.env.PORT
 const db = require('./src/db')
+
+const standardRoute = require('./src/routes/standard.route');
+app.use('/standard', standardRoute);
 
 async function start() {
   await db.getConnection()
