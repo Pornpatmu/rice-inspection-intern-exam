@@ -1,0 +1,51 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: rice-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 442544
+      MYSQL_DATABASE: rice_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./rice_db.sql:/docker-entrypoint-initdb.d/rice_db.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p442544"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./server-back
+    container_name: rice-backend
+    restart: unless-stopped
+    env_file:
+      - ./server-back/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      PORT: 8000
+      FRONTEND_URL: http://localhost:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: rice-frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env
+    environment:
+      VITE_API_BASE: http://localhost:8000/api
+    depends_on:
+      - backend
+    ports:
+      - "8080:5173"
+
+volumes:
+  mysql_data:
