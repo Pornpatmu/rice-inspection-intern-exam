@@ -3,8 +3,12 @@ const FileUploadService = require('../services/fileUpload.service');
 
 exports.getAll = async (req, res) => {
     try {
-        const data = await HistoryService.getAll();
-        console.log(data);
+        const filter = {
+            fromDate: req.query.fromDate,
+            toDate: req.query.toDate,
+            inspectionID: req.query.inspectionID,
+        };
+        const data = await HistoryService.getAll(filter);
         res.json(data);
     } catch (err) {
         console.log(err);

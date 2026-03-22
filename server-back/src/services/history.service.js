@@ -18,3 +18,10 @@ exports.create = async (data) => {
     const subStandards = await Standard.getSubStandards(inspection.standardID);
     return History.formatHistory(inspection, subStandards);
 };
+exports.update = async (id, data) => {
+    return await History.update(id, data);
+};
+
+exports.delete = async (id) => {
+    return await History.delete(id);
+};

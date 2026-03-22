@@ -7,12 +7,12 @@ exports.getAll = async (filter = {}) => {
         LEFT JOIN Standard s ON i.standardID = s.standardID
         WHERE 1=1`;
     const params = [];
-    if (filter.fromDate) {
-        query += ' AND i.samplingDate >= ?';
+    if (filter.fromDate && filter.fromDate !== '') {
+        query += ' AND DATE(i.createdAt) >= ?';
         params.push(filter.fromDate);
     }
-    if (filter.toDate) {
-        query += ' AND i.samplingDate <= ?';
+    if (filter.toDate && filter.toDate !== '') {
+        query += ' AND DATE(i.createdAt) <= ?';
         params.push(filter.toDate);
     }
     if (filter.inspectionID) {
@@ -62,13 +62,50 @@ exports.create = async (data) => {
 };
 
 exports.update = async (id, data) => {
+    const [result] = await db.query(
+        `UPDATE Inspection SET
+        note = ?,
+        price = ?,
+        samplingPoint = ?,
+        samplingDate = ?
+        WHERE inspectionID = ?`,
+        [
+            data.note || null,
+            data.price || null,
+            JSON.stringify(data.samplingPoint) || null,
+            data.samplingDate || null,
+            id
+        ]
+    );
 
+    if (result.affectedRows === 0) throw new Error('Update failed');
 
-}
+    return { message: 'updated successfully' };
+};
 
 exports.delete = async (id) => {
+    const [result] = await db.query(
+        'DELETE FROM Inspection WHERE inspectionID = ?',
+        [id]
+    );
 
-}
+    if (result.affectedRows === 0) throw new Error('Delete failed');
+
+    return { message: 'deleted successfully' };
+};
+
+exports.delete = async (id) => {
+    if (!id) throw new Error('ID is required');
+
+    const [result] = await db.query(
+        'DELETE FROM Inspection WHERE inspectionID = ?',
+        [id]
+    );
+
+    if (result.affectedRows === 0) throw new Error('Inspection not found');
+
+    return { message: 'deleted successfully' };
+};
 
 exports.formatHistoryInsert = (inspection) => ({
     name: inspection.name,

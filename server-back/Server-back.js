@@ -13,7 +13,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }))
 
-
+app.use(express.json());
 const standardRoute = require('./src/routes/standard.route');
 const historyRoute = require('./src/routes/history.route');
 
