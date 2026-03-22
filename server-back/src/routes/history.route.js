@@ -9,5 +9,6 @@ router.get('/:id', historyController.getbyID);
 router.post('/', upload.single('fileUpload'), historyController.create);
 router.patch('/:id', historyController.update);
 router.delete('/:id', historyController.delete);
+router.get('/:id/result', historyController.getResult);
 
 module.exports = router;

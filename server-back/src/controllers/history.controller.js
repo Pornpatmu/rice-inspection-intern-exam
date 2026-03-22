@@ -42,7 +42,7 @@ exports.create = async (req, res) => {
         console.log('imageLink:', imageLink);
         const filePath = req.file ? req.file.path : null;
         const result = await HistoryService.create({ ...data, fileUpload: filePath, imageLink });        
-        res.json({ message: 'History created successfully', id: result.insertId });
+        res.json(result);
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: err.message });
@@ -71,3 +71,13 @@ exports.delete = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 }
+
+exports.getResult = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const data = await HistoryService.getResult(id);
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

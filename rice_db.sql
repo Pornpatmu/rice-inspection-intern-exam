@@ -36,6 +36,18 @@ CREATE TABLE `SubStandard` (
   `conditionMin` ENUM("LT","LE","GT","GE"),
   `shape` JSON
 );
+
+CREATE TABLE `InspectionResult` (
+  `id`           INT PRIMARY KEY AUTO_INCREMENT,
+  `inspectionID` VARCHAR(12),
+  `type`         ENUM('composition', 'defect'),
+  `key`          VARCHAR(255),
+  `name`         VARCHAR(255),
+  `minLength`    FLOAT,
+  `maxLength`    FLOAT,
+  `actual`       DECIMAL(8,2)
+);
+
 INSERT INTO `Standard` (`standardID`, `name`) VALUES
 ('1', 'มาตรฐานข้าวชั้น 1'),
 ('2', 'มาตรฐานข้าวชั้น 2');
@@ -50,5 +62,5 @@ INSERT INTO `SubStandard` (`standardID`, `key`, `name`, `maxLength`, `minLength`
 
 ALTER TABLE `Inspection` ADD FOREIGN KEY (`standardID`) REFERENCES `Standard` (`standardID`);
 ALTER TABLE `SubStandard` ADD FOREIGN KEY (`standardID`) REFERENCES `Standard` (`standardID`);
+ALTER TABLE `InspectionResult` ADD FOREIGN KEY (`inspectionID`) REFERENCES `Inspection` (`inspectionID`);
 
-select * from SubStandard

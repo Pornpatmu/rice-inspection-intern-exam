@@ -84,17 +84,6 @@ exports.update = async (id, data) => {
 };
 
 exports.delete = async (id) => {
-    const [result] = await db.query(
-        'DELETE FROM Inspection WHERE inspectionID = ?',
-        [id]
-    );
-
-    if (result.affectedRows === 0) throw new Error('Delete failed');
-
-    return { message: 'deleted successfully' };
-};
-
-exports.delete = async (id) => {
     if (!id) throw new Error('ID is required');
 
     const [result] = await db.query(
@@ -106,6 +95,31 @@ exports.delete = async (id) => {
 
     return { message: 'deleted successfully' };
 };
+exports.createInspectionResult = async (inspectionID, composition, defect) => {
+    const rows = [
+        ...composition.map(c => [inspectionID, 'composition', c.key, c.name, c.minLength, c.maxLength, c.actual]),
+        ...defect.map(d => [inspectionID, 'defect', d.name, d.name, null, null, d.actual])
+    ];
+
+    for (const row of rows) {
+        await db.query(
+            `INSERT INTO InspectionResult (inspectionID, type, \`key\`, name, minLength, maxLength, actual) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            row
+        );
+    }
+};
+exports.getResultsByInspectionID = async (inspectionID) => {
+    const [rows] = await db.query(
+        'SELECT * FROM InspectionResult WHERE inspectionID = ?',
+        [inspectionID]
+    );
+
+    return {
+        composition: rows.filter(r => r.type === 'composition'),
+        defect: rows.filter(r => r.type === 'defect')
+    };
+};
+
 
 exports.formatHistoryInsert = (inspection) => ({
     name: inspection.name,

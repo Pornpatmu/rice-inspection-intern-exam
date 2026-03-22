@@ -38,3 +38,27 @@ exports.upload = multer({
         }
     }
 });
+
+exports.getGrains = (filePath) => {
+    const fileContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const grains = fileContent.grains || [];
+    return {
+        grains,
+        totalSample: grains.length
+    };
+};
+
+exports.getGrainsFromRaw = () => {
+    const rawPath = path.join(uploadsPath, 'raw');
+    if (!fs.existsSync(rawPath) || !fs.lstatSync(rawPath).isDirectory()) return { grains: [], totalSample: 0 };
+
+    const files = fs.readdirSync(rawPath);
+    if (files.length === 0) return { grains: [], totalSample: 0 };
+
+    const fileContent = JSON.parse(fs.readFileSync(path.join(rawPath, files[0]), 'utf8'));
+    const grains = fileContent.grains || [];
+    return {
+        grains,
+        totalSample: grains.length
+    };
+};

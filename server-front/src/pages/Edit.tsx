@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getHistoryByID } from '../api';
+import { getHistoryByID, updateHistory } from '../api';
+
+const samplingOptions = ['Front End', 'Back End', 'Other'];
+
+function parseSamplingPoint(raw?: string | string[]): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch { /* empty */ }
+  return [];
+}
 
 function Edit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({
     note: '',
     price: '',
@@ -12,19 +27,29 @@ function Edit() {
     samplingDate: '',
   });
 
-  const samplingOptions = ['Front End', 'Back End', 'Other'];
-
   useEffect(() => {
-    if (id) {
-      getHistoryByID(id).then(res => {
+    if (!id) {
+      setError('Missing inspection id');
+      setLoading(false);
+      return;
+    }
+
+    getHistoryByID(id)
+      .then(res => {
         setForm({
           note: res.note || '',
           price: String(res.price || ''),
-          samplingPoint: Array.isArray(res.samplingPoint) ? res.samplingPoint : [],
-          samplingDate: res.samplingDate ? res.samplingDate.slice(0, 16) : '',
+          samplingPoint: parseSamplingPoint(res.samplingPoint),
+          samplingDate: res.samplingDate
+            ? new Date(res.samplingDate).toISOString().slice(0, 16)
+            : '',
         });
-      });
-    }
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message);
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   const handleCheckbox = (value: string) => {
@@ -37,47 +62,91 @@ function Edit() {
   };
 
   const handleSubmit = async () => {
+    if (!id) return;
+    setSubmitting(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE}/history/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      alert('แก้ไขสำเร็จ');
+      await updateHistory(id, form);
       navigate(-1);
     } catch (err) {
-      alert('Error: ' + err);
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div>
-      <h1>Edit Inspection ID : {id}</h1>
+    <>
+      <nav className="navbar">
+        <a href="/" className="navbar-brand">EasyRice</a>
+      </nav>
 
-      <label>Note</label>
-      <textarea value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} />
+      <div className="page-wrapper">
+        {loading ? (
+          <div className="state-center">Loading...</div>
+        ) : error ? (
+          <div className="state-center">Error: {error}</div>
+        ) : (
+        <div className="modal-box">
+          <h2 className="modal-title">Edit Inspection ID : {id}</h2>
 
-      <label>Price</label>
-      <input type="number" min={0} max={100000} step={0.01} value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+          <div className="form-group">
+            <label className="form-label">Note</label>
+            <textarea
+              className="form-textarea"
+              placeholder="Inspection Support"
+              value={form.note}
+              onChange={e => setForm({ ...form, note: e.target.value })}
+            />
+          </div>
 
-      <label>Sampling Point</label>
-      <div>
-        {samplingOptions.map(option => (
-          <label key={option}>
-            <input type="checkbox" checked={form.samplingPoint.includes(option)} onChange={() => handleCheckbox(option)} />
-            {option}
-          </label>
-        ))}
+          <div className="form-group">
+            <label className="form-label">Price</label>
+            <input
+              className="form-input"
+              type="number"
+              min={0}
+              max={100000}
+              value={form.price}
+              onChange={e => setForm({ ...form, price: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Sampling Point</label>
+            <div className="checkbox-group">
+              {samplingOptions.map(opt => (
+                <label className="checkbox-item" key={opt}>
+                  <input
+                    type="checkbox"
+                    checked={form.samplingPoint.includes(opt)}
+                    onChange={() => handleCheckbox(opt)}
+                  />
+                  {opt}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Date/Time of Sampling</label>
+            <input
+              className="form-input"
+              type="datetime-local"
+              value={form.samplingDate}
+              onChange={e => setForm({ ...form, samplingDate: e.target.value })}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button className="btn btn-cancel" onClick={() => navigate(-1)} disabled={submitting}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Saving...' : 'Submit'}
+            </button>
+          </div>
+        </div>
+        )}
       </div>
-
-      <label>Date/Time of Sampling</label>
-      <input type="datetime-local" value={form.samplingDate} onChange={e => setForm({ ...form, samplingDate: e.target.value })} />
-
-      <button onClick={() => navigate(-1)}>Cancel</button>
-      <button onClick={handleSubmit}>Submit</button>
-    </div>
+    </>
   );
 }
 
